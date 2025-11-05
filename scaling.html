@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Scaling - Image Transform</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background: linear-gradient(145deg, #0a0a0a, #1c1c1c);
+      color: #e0e0e0;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .glass-card {
+      background: rgba(25, 25, 25, 0.75);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      padding: 2rem;
+      margin-top: 3rem;
+    }
+
+    h1, h2 {
+      color: #00c6ff;
+      font-weight: 600;
+    }
+
+    code {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 3px 6px;
+      border-radius: 6px;
+      color: #00ffcc;
+      font-family: monospace;
+    }
+
+    pre {
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 10px;
+      padding: 15px;
+      color: #00ffcc;
+      overflow-x: auto;
+    }
+
+    a {
+      color: #00c6ff;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 50px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+      color: #aaa;
+      font-size: 0.95rem;
+    }
+
+    footer strong {
+      color: #00c6ff;
+    }
+
+    .btn-back {
+      background: linear-gradient(90deg, #00c6ff, #0072ff);
+      border: none;
+      color: white;
+      border-radius: 12px;
+      padding: 10px 20px;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-back:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(0, 198, 255, 0.6);
+    }
+  </style>
+</head>
+
+<body class="p-4">
+  <div class="container glass-card">
+    <a href="index.html" class="btn-back">⬅ Back to Home</a>
+    <h1 class="text-center mb-4">Image Scaling</h1>
+
+    <h2>About Scaling</h2>
+    <p>
+      Image scaling is a transformation that resizes an image — either enlarging (upscaling)
+      or reducing (downscaling) its dimensions. This operation changes the size of the image
+      but preserves its structure and proportions when done uniformly.
+    </p>
+
+    <h2>Mathematical Formula</h2>
+    <p>
+      Scaling is represented by multiplying the original coordinates with scaling factors <code>Sx</code> and <code>Sy</code>:
+    </p>
+
+    <pre>
+x' = x · Sx
+y' = y · Sy
+    </pre>
+
+    <p>
+      Where:
+      <ul>
+        <li><code>(x, y)</code> → original coordinates</li>
+        <li><code>(x', y')</code> → coordinates after scaling</li>
+        <li><code>Sx</code> → scaling factor in X-direction</li>
+        <li><code>Sy</code> → scaling factor in Y-direction</li>
+      </ul>
+    </p>
+
+    <h2>Python Code (Using OpenCV)</h2>
+    <pre><code>
+import cv2
+
+# Read the image
+image = cv2.imread('image.jpg')
+
+# Define scaling factors
+scale_x = 1.5   # Horizontal scale
+scale_y = 1.5   # Vertical scale
+
+# Perform scaling using cv2.resize()
+scaled = cv2.resize(image, None, fx=scale_x, fy=scale_y, interpolation=cv2.INTER_LINEAR)
+
+# Display result
+cv2.imshow('Scaled Image', scaled)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+    </code></pre>
+
+    <h2>Explanation</h2>
+    <p>
+      The <code>cv2.resize()</code> function allows you to change the image size using 
+      <code>fx</code> and <code>fy</code> as scale factors. Setting both greater than 1 enlarges the image,
+      while values between 0 and 1 shrink it.
+    </p>
+
+    <footer>
+      Made by <strong>Manish Kumar</strong>, <strong>Navin Kumar Singh</strong> and <strong>Nikhil Kumar</strong><br />
+      Submitted to <strong>Prof. Vasudha Bhatnagar</strong>
+    </footer>
+  </div>
+</body>
+</html>
