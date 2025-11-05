@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Transform Tool</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="bg-light p-4">
+  <div class="container">
+    <h2 class="text-center mb-4">Image Transform Application</h2>
+
+    <div class="card p-3 mb-4">
+      <label for="imageUpload" class="form-label">Upload Image:</label>
+      <input type="file" id="imageUpload" class="form-control" accept="image/*" />
+    </div>
+
+    <div class="card p-3 mb-4">
+      <canvas id="canvas" class="border w-100"></canvas>
+    </div>
+
+    <div class="card p-3 mb-4">
+      <h5>Transform Controls</h5>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Rotation (degrees)</label>
+          <input type="number" id="rotate" class="form-control" value="0" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Scale</label>
+          <input type="number" step="0.1" id="scale" class="form-control" value="1" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Translate (px)</label>
+          <input type="number" id="translate" class="form-control" value="0" />
+        </div>
+      </div>
+      <button id="applyTransform" class="btn btn-primary mt-3">Apply Transform</button>
+    </div>
+  </div>
+
+<script>
+  const imageUpload = document.getElementById('imageUpload');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  let img = new Image();
+
+  imageUpload.addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function (event) {
+      img.src = event.target.result;
+      img.onload = function () {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        convertToGray();
+      }
+    }
+    reader.readAsDataURL(file);
+  });
+
+  function convertToGray() {
+    let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let data = imageData.data;
+
+    for (let i = 0; i < data.length; i += 4) {
+      let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+      data[i] = data[i + 1] = data[i + 2] = avg;
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+  }
+
+  document.getElementById('applyTransform').addEventListener('click', () => {
+    const rotate = parseFloat(document.getElementById('rotate').value);
+    const scale = parseFloat(document.getElementById('scale').value);
+    const translate = parseFloat(document.getElementById('translate').value);
+
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    ctx.save();
+    ctx.translate(translate, translate);
+    ctx.scale(scale, scale);
+    ctx.rotate((rotate * Math.PI) / 180);
+    ctx.drawImage(img, 0, 0);
+    ctx.restore();
+
+    convertToGray();
+  });
+</script>
+</body>
+</html>
+
