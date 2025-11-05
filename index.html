@@ -5,46 +5,157 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Image Transform Tool</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-</head>
-<body class="bg-light p-4">
-  <div class="container">
-    <h2 class="text-center mb-4">Image Transform Application</h2>
+  <style>
+    body {
+      background: linear-gradient(145deg, #0a0a0a, #1c1c1c);
+      color: #e0e0e0;
+      font-family: 'Poppins', sans-serif;
+    }
 
-    <div class="card p-3 mb-4">
+    .glass-card {
+      background: rgba(20, 20, 20, 0.75);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      transition: all 0.3s ease;
+    }
+
+    .glass-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    }
+
+    .form-control, .form-range, .btn-primary {
+      background-color: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      border-radius: 10px;
+    }
+
+    .form-control:focus, .form-range:focus {
+      background-color: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 12px #00c6ff;
+      color: #fff;
+    }
+
+    .btn-primary {
+      background: linear-gradient(90deg, #00c6ff, #0072ff);
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      transform: scale(1.05);
+      background: linear-gradient(90deg, #0072ff, #00c6ff);
+      box-shadow: 0 0 20px rgba(0, 198, 255, 0.5);
+    }
+
+    canvas {
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+      display: block;
+      margin: auto;
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      padding: 20px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, rgba(0, 114, 255, 0.1), rgba(0, 198, 255, 0.05));
+      color: #aaa;
+      font-size: 0.95rem;
+      letter-spacing: 0.4px;
+    }
+
+    footer strong {
+      color: #00c6ff;
+    }
+  </style>
+</head>
+
+<body class="p-4">
+  <div class="container">
+    <h2 class="text-center mb-4 fw-bold text-info">🖼️ Image Transform Application</h2>
+
+    <div class="glass-card p-4 mb-4">
       <label for="imageUpload" class="form-label">Upload Image:</label>
       <input type="file" id="imageUpload" class="form-control" accept="image/*" />
     </div>
 
-    <div class="card p-3 mb-4">
-      <canvas id="canvas" class="border w-100"></canvas>
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <h5 class="text-center text-secondary">Original (Grayscale)</h5>
+        <canvas id="canvasOriginal" class="border w-100"></canvas>
+      </div>
+      <div class="col-md-6">
+        <h5 class="text-center text-secondary">Transformed Result</h5>
+        <canvas id="canvasResult" class="border w-100"></canvas>
+      </div>
     </div>
 
-    <div class="card p-3 mb-4">
-      <h5>Transform Controls</h5>
-      <div class="row g-3">
-        <div class="col-md-4">
-          <label class="form-label">Rotation (degrees)</label>
-          <input type="number" id="rotate" class="form-control" value="0" />
+    <div class="glass-card p-4 mb-4">
+      <h5 class="text-info">Transform Controls</h5>
+      <div class="row g-3 align-items-center">
+        <div class="col-md-3">
+          <label class="form-label">Rotation (°)</label>
+          <input type="range" id="rotateRange" class="form-range" min="-180" max="180" value="0" />
+          <input type="number" id="rotate" class="form-control mt-1" value="0" />
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
           <label class="form-label">Scale</label>
-          <input type="number" step="0.1" id="scale" class="form-control" value="1" />
+          <input type="range" id="scaleRange" class="form-range" min="0.1" max="3" step="0.1" value="1" />
+          <input type="number" id="scale" class="form-control mt-1" step="0.1" value="1" />
         </div>
-        <div class="col-md-4">
-          <label class="form-label">Translate (px)</label>
-          <input type="number" id="translate" class="form-control" value="0" />
+        <div class="col-md-3">
+          <label class="form-label">Translate X (px)</label>
+          <input type="range" id="translateXRange" class="form-range" min="-500" max="500" value="0" />
+          <input type="number" id="translateX" class="form-control mt-1" value="0" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Translate Y (px)</label>
+          <input type="range" id="translateYRange" class="form-range" min="-500" max="500" value="0" />
+          <input type="number" id="translateY" class="form-control mt-1" value="0" />
         </div>
       </div>
-      <button id="applyTransform" class="btn btn-primary mt-3">Apply Transform</button>
+      <button id="applyTransform" class="btn btn-primary mt-3 w-100">Apply Transform</button>
     </div>
+
+    <footer>
+      Made by <strong>Manish Kumar</strong>, <strong>Navin Kumar Singh</strong> and <strong>Nikhil Kumar</strong><br />
+      Submitted to <strong>Prof. Vasudha Bhatnagar</strong>
+    </footer>
   </div>
 
 <script>
   const imageUpload = document.getElementById('imageUpload');
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
+  const canvasOriginal = document.getElementById('canvasOriginal');
+  const canvasResult = document.getElementById('canvasResult');
+
+  const ctxOriginal = canvasOriginal.getContext('2d');
+  const ctxResult = canvasResult.getContext('2d');
 
   let img = new Image();
+
+  const pairs = [
+    ['rotateRange', 'rotate'],
+    ['scaleRange', 'scale'],
+    ['translateXRange', 'translateX'],
+    ['translateYRange', 'translateY']
+  ];
+
+  pairs.forEach(([rangeId, inputId]) => {
+    const range = document.getElementById(rangeId);
+    const input = document.getElementById(inputId);
+
+    range.addEventListener('input', () => (input.value = range.value));
+    input.addEventListener('input', () => (range.value = input.value));
+  });
 
   imageUpload.addEventListener('change', function (e) {
     const file = e.target.files[0];
@@ -53,17 +164,21 @@
     reader.onload = function (event) {
       img.src = event.target.result;
       img.onload = function () {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-        convertToGray();
-      }
-    }
+        canvasOriginal.width = canvasResult.width = img.width;
+        canvasOriginal.height = canvasResult.height = img.height;
+
+        ctxOriginal.drawImage(img, 0, 0);
+        convertToGray(ctxOriginal);
+
+        ctxResult.drawImage(img, 0, 0);
+        convertToGray(ctxResult);
+      };
+    };
     reader.readAsDataURL(file);
   });
 
-  function convertToGray() {
-    let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  function convertToGray(context) {
+    let imageData = context.getImageData(0, 0, canvasOriginal.width, canvasOriginal.height);
     let data = imageData.data;
 
     for (let i = 0; i < data.length; i += 4) {
@@ -71,27 +186,31 @@
       data[i] = data[i + 1] = data[i + 2] = avg;
     }
 
-    ctx.putImageData(imageData, 0, 0);
+    context.putImageData(imageData, 0, 0);
   }
 
   document.getElementById('applyTransform').addEventListener('click', () => {
     const rotate = parseFloat(document.getElementById('rotate').value);
     const scale = parseFloat(document.getElementById('scale').value);
-    const translate = parseFloat(document.getElementById('translate').value);
+    const translateX = parseFloat(document.getElementById('translateX').value);
+    const translateY = parseFloat(document.getElementById('translateY').value);
 
-    canvas.width = img.width;
-    canvas.height = img.height;
+    canvasResult.width = img.width;
+    canvasResult.height = img.height;
 
-    ctx.save();
-    ctx.translate(translate, translate);
-    ctx.scale(scale, scale);
-    ctx.rotate((rotate * Math.PI) / 180);
-    ctx.drawImage(img, 0, 0);
-    ctx.restore();
+    ctxResult.save();
 
-    convertToGray();
+    ctxResult.translate(canvasResult.width / 2, canvasResult.height / 2);
+    ctxResult.rotate((rotate * Math.PI) / 180);
+    ctxResult.scale(scale, scale);
+    ctxResult.translate(-img.width / 2 + translateX, -img.height / 2 + translateY);
+
+    ctxResult.drawImage(img, 0, 0);
+    ctxResult.restore();
+
+    convertToGray(ctxResult);
   });
 </script>
+
 </body>
 </html>
-
