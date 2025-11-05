@@ -5,11 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Image Transform Tool</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  
   <style>
     body {
       background: linear-gradient(145deg, #0a0a0a, #1c1c1c);
       color: #e0e0e0;
       font-family: 'Poppins', sans-serif;
+    }
+
+    .cover-page {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #00c6ff;
+      background: radial-gradient(circle at top left, #001f3f, #000);
+    }
+
+    .cover-page h1 {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      font-weight: 700;
+    }
+
+    .cover-page p {
+      font-size: 1.3rem;
+      color: #ccc;
+    }
+
+    .start-btn {
+      margin-top: 30px;
+      padding: 12px 30px;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #00c6ff, #0072ff);
+      border: none;
+      color: white;
+      transition: all 0.3s ease;
+    }
+
+    .start-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(0, 198, 255, 0.6);
+    }
+
+    .app-container {
+      display: none;
     }
 
     .glass-card {
@@ -80,7 +123,40 @@
 </head>
 
 <body class="p-4">
-  <div class="container">
+    <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand" href="#">Image Transformations</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="/rotation.html">Rotation</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/scaling.html">Scaling</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/translation.html">Translation</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  
+
+  <div class="cover-page" id="coverPage">
+    <h1>🖼️ Image Transform Application</h1>
+    <p>Developed by Manish Kumar, Navin Kumar Singh, and Nikhil Kumar</p>
+    <p>Submitted to Prof. Vasudha Bhatnagar</p>
+    <button class="start-btn" id="startBtn">Start Application</button>
+  </div>
+
+  <div class="container app-container" id="appContainer">
+    <br>
     <h2 class="text-center mb-4 fw-bold text-info">🖼️ Image Transform Application</h2>
 
     <div class="glass-card p-4 mb-4">
@@ -133,13 +209,19 @@
   </div>
 
 <script>
+  const startBtn = document.getElementById('startBtn');
+  const coverPage = document.getElementById('coverPage');
+  const appContainer = document.getElementById('appContainer');
+  startBtn.addEventListener('click', () => {
+    coverPage.style.display = 'none';
+    appContainer.style.display = 'block';
+  });
+
   const imageUpload = document.getElementById('imageUpload');
   const canvasOriginal = document.getElementById('canvasOriginal');
   const canvasResult = document.getElementById('canvasResult');
-
   const ctxOriginal = canvasOriginal.getContext('2d');
   const ctxResult = canvasResult.getContext('2d');
-
   let img = new Image();
 
   const pairs = [
@@ -152,7 +234,6 @@
   pairs.forEach(([rangeId, inputId]) => {
     const range = document.getElementById(rangeId);
     const input = document.getElementById(inputId);
-
     range.addEventListener('input', () => (input.value = range.value));
     input.addEventListener('input', () => (range.value = input.value));
   });
@@ -160,16 +241,13 @@
   imageUpload.addEventListener('change', function (e) {
     const file = e.target.files[0];
     const reader = new FileReader();
-
     reader.onload = function (event) {
       img.src = event.target.result;
       img.onload = function () {
         canvasOriginal.width = canvasResult.width = img.width;
         canvasOriginal.height = canvasResult.height = img.height;
-
         ctxOriginal.drawImage(img, 0, 0);
         convertToGray(ctxOriginal);
-
         ctxResult.drawImage(img, 0, 0);
         convertToGray(ctxResult);
       };
@@ -180,12 +258,10 @@
   function convertToGray(context) {
     let imageData = context.getImageData(0, 0, canvasOriginal.width, canvasOriginal.height);
     let data = imageData.data;
-
     for (let i = 0; i < data.length; i += 4) {
       let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
       data[i] = data[i + 1] = data[i + 2] = avg;
     }
-
     context.putImageData(imageData, 0, 0);
   }
 
@@ -197,20 +273,17 @@
 
     canvasResult.width = img.width;
     canvasResult.height = img.height;
-
     ctxResult.save();
-
     ctxResult.translate(canvasResult.width / 2, canvasResult.height / 2);
     ctxResult.rotate((rotate * Math.PI) / 180);
     ctxResult.scale(scale, scale);
     ctxResult.translate(-img.width / 2 + translateX, -img.height / 2 + translateY);
-
     ctxResult.drawImage(img, 0, 0);
     ctxResult.restore();
-
     convertToGray(ctxResult);
   });
+  
 </script>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
