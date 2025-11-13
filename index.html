@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Image Rotation - Image Transform</title>
+  <title>Image Transform Tool</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  
   <style>
     body {
       background: linear-gradient(145deg, #0a0a0a, #1c1c1c);
@@ -12,139 +13,374 @@
       font-family: 'Poppins', sans-serif;
     }
 
+    .cover-page {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #00c6ff;
+      background: radial-gradient(circle at top left, #001f3f, #000);
+    }
+
+    .cover-page h1 {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      font-weight: 700;
+    }
+
+    .cover-page p {
+      font-size: 1.3rem;
+      color: #ccc;
+    }
+
+    .start-btn {
+      margin-top: 30px;
+      padding: 12px 30px;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #00c6ff, #0072ff);
+      border: none;
+      color: white;
+      transition: all 0.3s ease;
+    }
+
+    .start-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(0, 198, 255, 0.6);
+    }
+
+    .app-container {
+      display: none;
+    }
+
     .glass-card {
-      background: rgba(25, 25, 25, 0.75);
+      background: rgba(20, 20, 20, 0.75);
       backdrop-filter: blur(15px);
       border-radius: 20px;
       border: 1px solid rgba(255, 255, 255, 0.1);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-      padding: 2rem;
-      margin-top: 3rem;
+      transition: all 0.3s ease;
     }
 
-    h1, h2 {
-      color: #00c6ff;
-      font-weight: 600;
+    .glass-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
     }
 
-    code {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 3px 6px;
-      border-radius: 6px;
-      color: #00ffcc;
-      font-family: monospace;
-    }
-
-    pre {
-      background: rgba(0, 0, 0, 0.4);
+    .form-control, .form-range, .btn-primary {
+      background-color: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
       border-radius: 10px;
-      padding: 15px;
-      color: #00ffcc;
-      overflow-x: auto;
     }
 
-    a {
-      color: #00c6ff;
-      text-decoration: none;
+    .form-control:focus, .form-range:focus {
+      background-color: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 12px #00c6ff;
+      color: #fff;
     }
 
-    a:hover {
-      text-decoration: underline;
+    .btn-primary {
+      background: linear-gradient(90deg, #00c6ff, #0072ff);
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      transform: scale(1.05);
+      background: linear-gradient(90deg, #0072ff, #00c6ff);
+      box-shadow: 0 0 20px rgba(0, 198, 255, 0.5);
+    }
+
+    canvas {
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+      display: block;
+      margin: auto;
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.5);
     }
 
     footer {
       text-align: center;
-      margin-top: 50px;
-      padding: 15px;
-      background: rgba(255, 255, 255, 0.05);
+      margin-top: 40px;
+      padding: 20px;
       border-radius: 15px;
+      background: linear-gradient(135deg, rgba(0, 114, 255, 0.1), rgba(0, 198, 255, 0.05));
       color: #aaa;
       font-size: 0.95rem;
+      letter-spacing: 0.4px;
     }
 
     footer strong {
       color: #00c6ff;
     }
-
-    .btn-back {
-      background: linear-gradient(90deg, #00c6ff, #0072ff);
-      border: none;
-      color: white;
-      border-radius: 12px;
-      padding: 10px 20px;
-      margin-bottom: 20px;
-      transition: all 0.3s ease;
-    }
-
-    .btn-back:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(0, 198, 255, 0.6);
-    }
   </style>
 </head>
 
-<body class="p-4">
-  <div class="container glass-card">
-    <a href="index.html" class="btn-back">⬅ Back to Home</a>
-    <h1 class="text-center mb-4">Image Rotation</h1>
+<body class="p-1">
+    <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand" href="#">Image Transformations</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
-    <h2>About Rotation</h2>
-    <p>
-      Image rotation is a geometric transformation that rotates an image by a specific angle
-      around a given point (usually the image center). It changes the orientation of the image
-      while preserving its shape and pixel values.
-    </p>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="rotation.html">Rotation</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="scaling.html">Scaling</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="translation.html">Translation</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  
 
-    <h2>Mathematical Formula</h2>
-    <p>
-      The rotation of a point <code>(x, y)</code> around the origin by an angle θ (in radians)
-      is given by:
-    </p>
+  <div class="cover-page" id="coverPage">
+    <h1>🖼️ Image Transform Application</h1>
+    <p>Developed by Manish Kumar, Navin Kumar Singh, and Nikhil Kumar</p>
+    <p>Submitted to Prof. Vasudha Bhatnagar</p>
+    <button class="start-btn" id="startBtn">Start Application</button>
+  </div>
 
-    <pre>
-x' = x·cos(θ) - y·sin(θ)
-y' = x·sin(θ) + y·cos(θ)
-    </pre>
+  <div class="container app-container" id="appContainer">
+    <br>
+    <h2 class="text-center mb-4 fw-bold text-info">🖼️ Image Transform Application</h2>
 
-    <p>
-      Where:
-      <ul>
-        <li><code>(x, y)</code> → original coordinates</li>
-        <li><code>(x', y')</code> → new coordinates after rotation</li>
-        <li><code>θ</code> → rotation angle (positive = counter-clockwise)</li>
-      </ul>
-    </p>
+    <div class="glass-card p-4 mb-4">
+      <label for="imageUpload" class="form-label">Upload Image:</label>
+      <input type="file" id="imageUpload" class="form-control" accept="image/*" />
+    </div>
 
-    <h2>Python Code (Using OpenCV)</h2>
-    <pre><code>
-import cv2
-import numpy as np
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <h5 class="text-center text-secondary">Original (Grayscale)</h5>
+        <canvas id="canvasOriginal" class="border w-100"></canvas>
+      </div>
+      <div class="col-md-6">
+        <h5 class="text-center text-secondary">Transformed Result</h5>
+        <canvas id="canvasResult" class="border w-100"></canvas>
+      </div>
+    </div>
 
-# Read image
-image = cv2.imread('image.jpg')
+    <div class="glass-card p-4 mb-4">
+      <h5 class="text-info">Transform Controls</h5>
+      <div class="row g-3 align-items-center">
+        <div class="col-md-3">
+          <label class="form-label">Rotation (°)</label>
+          <input type="range" id="rotateRange" class="form-range" min="-180" max="180" value="0" />
+          <input type="number" id="rotate" class="form-control mt-1" value="0" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Scale</label>
+          <input type="range" id="scaleRange" class="form-range" min="0.1" max="3" step="0.1" value="1" />
+          <input type="number" id="scale" class="form-control mt-1" step="0.1" value="1" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Translate X (px)</label>
+          <input type="range" id="translateXRange" class="form-range" min="-500" max="500" value="0" />
+          <input type="number" id="translateX" class="form-control mt-1" value="0" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Translate Y (px)</label>
+          <input type="range" id="translateYRange" class="form-range" min="-500" max="500" value="0" />
+          <input type="number" id="translateY" class="form-control mt-1" value="0" />
+        </div>
+      </div>
+      <button id="applyTransform" class="btn btn-primary mt-3 w-100">Apply Transform</button>
+    </div>
 
-# Get image dimensions
-(h, w) = image.shape[:2]
-center = (w // 2, h // 2)
-
-# Define rotation matrix
-angle = 45  # degrees
-scale = 1.0
-M = cv2.getRotationMatrix2D(center, angle, scale)
-
-# Apply rotation
-rotated = cv2.warpAffine(image, M, (w, h))
-
-# Display result
-cv2.imshow('Rotated Image', rotated)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-    </code></pre>
-    <a href="/real_rot.html">This is Under Process will be back soon</a>
     <footer>
       Made by <strong>Manish Kumar</strong>, <strong>Navin Kumar Singh</strong> and <strong>Nikhil Kumar</strong><br />
       Submitted to <strong>Prof. Vasudha Bhatnagar</strong>
     </footer>
   </div>
+
+<script>
+  const startBtn = document.getElementById('startBtn');
+  const coverPage = document.getElementById('coverPage');
+  const appContainer = document.getElementById('appContainer');
+  startBtn.addEventListener('click', () => {
+    coverPage.style.display = 'none';
+    appContainer.style.display = 'block';
+  });
+
+  const imageUpload = document.getElementById('imageUpload');
+  const canvasOriginal = document.getElementById('canvasOriginal');
+  const canvasResult = document.getElementById('canvasResult');
+  const ctxOriginal = canvasOriginal.getContext('2d');
+  const ctxResult = canvasResult.getContext('2d');
+  let img = new Image();
+
+  // 🔹 Containers for matrix + pixel info
+  const matrixContainer = document.createElement('div');
+  matrixContainer.classList.add('glass-card', 'p-3', 'mt-3');
+  document.getElementById('appContainer').appendChild(matrixContainer);
+
+  const pixelInfo = document.createElement('div');
+  pixelInfo.classList.add('glass-card', 'p-3', 'mt-3', 'text-light');
+  document.getElementById('appContainer').appendChild(pixelInfo);
+
+  const pairs = [
+    ['rotateRange', 'rotate'],
+    ['scaleRange', 'scale'],
+    ['translateXRange', 'translateX'],
+    ['translateYRange', 'translateY']
+  ];
+
+  pairs.forEach(([rangeId, inputId]) => {
+    const range = document.getElementById(rangeId);
+    const input = document.getElementById(inputId);
+    range.addEventListener('input', () => (input.value = range.value));
+    input.addEventListener('input', () => (range.value = input.value));
+  });
+
+  imageUpload.addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      img.src = event.target.result;
+      img.onload = function () {
+        canvasOriginal.width = canvasResult.width = img.width;
+        canvasOriginal.height = canvasResult.height = img.height;
+
+        ctxOriginal.drawImage(img, 0, 0);
+        convertToGray(ctxOriginal);
+        ctxResult.drawImage(img, 0, 0);
+        convertToGray(ctxResult);
+
+        showPixelData(ctxOriginal);
+        pixelInfo.innerHTML =
+          "<h5 class='text-info'>🖱️ Click on any pixel in the image to see its RGB & Grayscale value</h5>";
+      };
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function convertToGray(context) {
+    let imageData = context.getImageData(0, 0, canvasOriginal.width, canvasOriginal.height);
+    let data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+      data[i] = data[i + 1] = data[i + 2] = avg;
+    }
+    context.putImageData(imageData, 0, 0);
+  }
+
+  // 🔹 Show both RGB & Grayscale matrices + pixel visualization
+  function showPixelData(context) {
+    const size = 10;
+    const imgData = context.getImageData(0, 0, size, size);
+    const data = imgData.data;
+
+    let rgbMatrix = [];
+    let grayMatrix = [];
+
+    for (let y = 0; y < size; y++) {
+      let rowRGB = [];
+      let rowGray = [];
+      for (let x = 0; x < size; x++) {
+        const i = (y * size + x) * 4;
+        const r = data[i],
+          g = data[i + 1],
+          b = data[i + 2];
+        const avg = Math.round((r + g + b) / 3);
+        rowRGB.push(`[${r},${g},${b}]`);
+        rowGray.push(avg);
+      }
+      rgbMatrix.push(rowRGB);
+      grayMatrix.push(rowGray);
+    }
+
+    let pixelHTML = `<canvas id="pixelPreview" width="${size * 20}" height="${size * 20}" style="border-radius:8px;"></canvas>`;
+    let html = `
+      <h4 class="text-info mb-3">🧮 Pixel Data Overview (10×10 sample)</h4>
+      <div class="mb-4">
+        <h5 class="text-warning">🎨 Original RGB Matrix</h5>
+        ${makeTable(rgbMatrix)}
+        <h5 class="text-success mt-4">⚫ Grayscale Matrix</h5>
+        ${makeTable(grayMatrix)}
+        <h5 class="text-primary mt-4">🧊 Pixel Visualization (Zoomed 20×)</h5>
+        ${pixelHTML}
+      </div>`;
+    matrixContainer.innerHTML = html;
+
+    // Draw mosaic
+    const mosaic = document.getElementById("pixelPreview").getContext("2d");
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const i = (y * size + x) * 4;
+        const r = data[i],
+          g = data[i + 1],
+          b = data[i + 2];
+        mosaic.fillStyle = `rgb(${r},${g},${b})`;
+        mosaic.fillRect(x * 20, y * 20, 20, 20);
+      }
+    }
+  }
+
+  // 🔹 Pixel click interaction
+  canvasOriginal.addEventListener("click", (e) => {
+    const rect = canvasOriginal.getBoundingClientRect();
+    const x = Math.floor(e.clientX - rect.left);
+    const y = Math.floor(e.clientY - rect.top);
+    const pixel = ctxOriginal.getImageData(x, y, 1, 1).data;
+
+    const [r, g, b] = pixel;
+    const gray = Math.round((r + g + b) / 3);
+
+    pixelInfo.innerHTML = `
+      <h5 class="text-warning">🎯 Pixel Info</h5>
+      <p><b>Coordinates:</b> (${x}, ${y})</p>
+      <p><b>RGB:</b> [${r}, ${g}, ${b}]</p>
+      <p><b>Grayscale:</b> ${gray}</p>
+      <div style="width:50px; height:50px; background:rgb(${r},${g},${b}); border-radius:6px; border:1px solid #999;"></div>
+    `;
+  });
+
+  // Helper: make table
+  function makeTable(matrix) {
+    let html = `<div class="table-responsive"><table class="table table-dark table-sm table-bordered text-center align-middle" style="font-size:0.7rem;">`;
+    matrix.forEach(row => {
+      html += "<tr>";
+      row.forEach(val => (html += `<td>${val}</td>`));
+      html += "</tr>";
+    });
+    html += "</table></div>";
+    return html;
+  }
+
+  document.getElementById('applyTransform').addEventListener('click', () => {
+    const rotate = parseFloat(document.getElementById('rotate').value);
+    const scale = parseFloat(document.getElementById('scale').value);
+    const translateX = parseFloat(document.getElementById('translateX').value);
+    const translateY = parseFloat(document.getElementById('translateY').value);
+
+    canvasResult.width = img.width;
+    canvasResult.height = img.height;
+    ctxResult.save();
+    ctxResult.translate(canvasResult.width / 2, canvasResult.height / 2);
+    ctxResult.rotate((rotate * Math.PI) / 180);
+    ctxResult.scale(scale, scale);
+    ctxResult.translate(-img.width / 2 + translateX, -img.height / 2 + translateY);
+    ctxResult.drawImage(img, 0, 0);
+    ctxResult.restore();
+    convertToGray(ctxResult);
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
