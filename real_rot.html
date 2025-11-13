@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Rotation Matrix Demo (Pixel-level)</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #0f1724; color: #e6eef6; font-family: Inter, system-ui, Arial; padding: 20px; }
+    .glass { background: rgba(255,255,255,0.04); border-radius: 12px; padding: 16px; border: 1px solid rgba(255,255,255,0.04); }
+    canvas { image-rendering: pixelated; display:block; margin:auto; background: #0b1220; }
+    pre { background: rgba(0,0,0,0.2); padding:10px; border-radius:6px; overflow:auto; }
+    td { font-family: monospace; white-space:nowrap; padding:3px 6px; }
+    .matrix-table td { border: 1px solid rgba(255,255,255,0.06); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 class="mb-3 text-info">Rotation Matrix Demo — Pixel-level (show steps)</h2>
+
+    <div class="row g-3">
+      <div class="col-md-5 glass">
+        <label class="form-label">Upload a (small) image (PNG/JPG). Best if &lt;= 30×30 px)</label>
+        <input id="file" class="form-control mb-2" type="file" accept="image/*">
+
+        <label class="form-label mt-2">Sample size (max pixels to show)</label>
+        <input id="sampleSize" class="form-control mb-2" type="number" value="10" min="2" max="30" />
+
+        <div class="mb-2">
+          <button id="loadSample" class="btn btn-primary">Load & Show Matrix</button>
+          <button id="autoSample" class="btn btn-outline-light ms-2">Auto-resize large image</button>
+        </div>
+
+        <div id="originalInfo" class="mt-2"></div>
+        <h6 class="mt-3 text-warning">Original (RGB) matrix — first N×N</h6>
+        <div id="rgbMatrix" class="mb-2"></div>
+        <h6 class="text-success">Grayscale matrix (computed)</h6>
+        <div id="grayMatrix" class="mb-2"></div>
+
+        <h6 class="text-primary">Zoomed Pixel Preview</h6>
+        <canvas id="previewOriginal" width="200" height="200" style="width:100%; height:auto; max-width:260px; border-radius:6px;"></canvas>
+      </div>
+
+      <div class="col-md-7 glass">
+        <div class="row g-2">
+          <div class="col-md-6">
+            <label class="form-label">Rotation angle (degrees)</label>
+            <input id="angle" class="form-control mb-2" type="number" value="45" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Number of pixels to log steps for</label>
+            <input id="logCount" class="form-control mb-2" type="number" value="12" min="1" max="200" />
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <button id="applyRot" class="btn btn-success">Apply Rotation (manual matrix)</button>
+          <button id="clearLog" class="btn btn-outline-light ms-2">Clear Log</button>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <h6 class="text-info">Rotated Pixel Preview</h6>
+            <canvas id="previewRotated" width="200" height="200" style="width:100%; height:auto; max-width:260px; border-radius:6px;"></canvas>
+          </div>
+          <div class="col-md-6">
+            <h6 class="text-info">Rotated (RGB) matrix — same N×N grid</h6>
+            <div id="rotMatrix"></div>
+          </div>
+        </div>
+
+        <h6 class="mt-3 text-light">Step-by-step log (shows calculations for first pixels)</h6>
+        <pre id="log" style="height:240px"></pre>
+      </div>
+    </div>
+
+    <!-- Hidden working canvas (actual image draws) -->
+    <canvas id="work" style="display:none;"></canvas>
+  </div>
+
+<script>
+/*
+  Rotation Matrix Demo - JS
+  - Loads image into hidden canvas, extracts pixel matrix.
+  - Shows first N×N RGB and grayscale values + zoomed preview.
+  - Applies manual rotation using inverse-mapping (per-pixel) and nearest neighbor.
+  - Displays step-by-step calculations for first K pixels.
+*/
+
+const fileIn = document.getElementById('file');
+const sampleSizeInput = document.getElementById('sampleSize');
+const loadSampleBtn = document.getElementById('loadSample');
+const autoSampleBtn = document.getElementById('autoSample');
+const originalInfo = document.getElementById('originalInfo');
+const rgbMatrixDiv = document.getElementById('rgbMatrix');
+const grayMatrixDiv = document.getElementById('grayMatrix');
+const previewOriginal = document.getElementById('previewOriginal');
+const previewRotated = document.getElementById('previewRotated');
+const work = document.getElementById('work');
+const angleInput = document.getElementById('angle');
+const applyRotBtn = document.getElementById('applyRot');
+const logEl = document.getElementById('log');
+const rotMatrixDiv = document.getElementById('rotMatrix');
+const logCountInput = document.getElementById('logCount');
+const clearLogBtn = document.getElementById('clearLog');
+const autoSampleBtnEl = document.getElementById('autoSample');
+
+let img = new Image();
+let imgW=0, imgH=0;
+let pixelData = null; // ImageData of full image (we will sample)
+let sampleN = 10;
+
+// helper: pretty table for matrix values (RGB or numbers)
+function makeTable(matrix, isRGB=false) {
+  const n = matrix.length;
+  let table = '<div style="overflow:auto; max-height:220px;"><table class="matrix-table" cellpadding="0" cellspacing="0"><tbody>';
+  for (let y=0;y<n;y++){
+    table += '<tr>';
+    for (let x=0;x<n;x++){
+      const v = matrix[y][x];
+      table += `<td style="padding:4px">${isRGB? v : v.toString().padStart(3,' ')}</td>`;
+    }
+    table += '</tr>';
+  }
+  table += '</tbody></table></div>';
+  return table;
+}
+
+// draw zoomed mosaic to canvas
+function drawMosaic(matrixRGB, canvas, zoom=20) {
+  const n = matrixRGB.length;
+  canvas.width = n * zoom;
+  canvas.height = n * zoom;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  for (let y=0;y<n;y++){
+    for (let x=0;x<n;x++){
+      const part = matrixRGB[y][x]; // "[r,g,b]" string or array
+      let r,g,b;
+      if (Array.isArray(part)) [r,g,b]=part;
+      else {
+        // parse string "[r,g,b]"
+        const nums = part.replace(/[\[\]\s]/g,'').split(',').map(Number);
+        [r,g,b] = nums;
+      }
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillRect(x*zoom, y*zoom, zoom, zoom);
+    }
+  }
+}
+
+// convert ImageData -> matrices (first N×N)
+function getMatricesFromImageData(imgData, N) {
+  const w = imgData.width, h = imgData.height;
+  const outN = Math.min(N, w, h);
+  const rgb = Array.from({length:outN}, ()=> Array(outN).fill([0,0,0]));
+  const gray = Array.from({length:outN}, ()=> Array(outN).fill(0));
+  const data = imgData.data;
+  for (let y=0;y<outN;y++){
+    for (let x=0;x<outN;x++){
+      const i = (y * w + x) * 4;
+      const r = data[i], g = data[i+1], b = data[i+2];
+      rgb[y][x] = [r,g,b];
+      // weighted luminance (more accurate)
+      const lum = Math.round(0.299*r + 0.587*g + 0.114*b);
+      gray[y][x] = lum;
+    }
+  }
+  return {rgb, gray, sampleSize: outN};
+}
+
+// load sample: draw image to hidden canvas and extract ImageData
+function loadImageToWork(imgEl, resizeTo=null, auto=false) {
+  const wCanvas = work;
+  const ctx = wCanvas.getContext('2d');
+  // Optionally resize image to small dims for clear matrix demonstration
+  let targetW = imgEl.naturalWidth;
+  let targetH = imgEl.naturalHeight;
+  if (resizeTo) {
+    targetW = resizeTo.width;
+    targetH = resizeTo.height;
+  } else if (auto && Math.max(imgEl.naturalWidth, imgEl.naturalHeight) > sampleN) {
+    targetW = targetH = sampleN;
+  }
+  wCanvas.width = targetW;
+  wCanvas.height = targetH;
+  ctx.clearRect(0,0,targetW,targetH);
+  // draw image scaled to target canvas (nearest neighbor effect disabled here)
+  ctx.drawImage(imgEl, 0, 0, targetW, targetH);
+  imgW = targetW; imgH = targetH;
+  pixelData = ctx.getImageData(0,0,targetW,targetH);
+  originalInfo.innerHTML = `<small>Working image size: ${imgW}×${imgH} px</small>`;
+}
+
+// UI handlers
+fileIn.addEventListener('change', (ev)=>{
+  const f = ev.target.files[0];
+  if(!f) return;
+  const url = URL.createObjectURL(f);
+  img = new Image();
+  img.onload = () => {
+    // default sampleN from input
+    sampleN = Math.max(2, Math.min(30, parseInt(sampleSizeInput.value||10)));
+    // If image larger than 50px, scale it down for clarity unless user toggles auto-resize off
+    const auto = true;
+    // For demo we will resize to at most sampleN if image is larger to get a small pixel grid
+    const resizeTo = (Math.max(img.naturalWidth, img.naturalHeight) > sampleN) ? {width: sampleN, height: sampleN} : null;
+    loadImageToWork(img, resizeTo, auto);
+    displayMatricesAndPreview();
+  };
+  img.onerror = ()=> alert('Failed to load image.');
+  img.src = url;
+});
+
+loadSampleBtn.addEventListener('click', ()=>{
+  if(!img.src) { alert('Please upload an image first.'); return; }
+  sampleN = Math.max(2, Math.min(30, parseInt(sampleSizeInput.value||10)));
+  // If original image is larger, scale it down to sampleN for pixel demonstration
+  const resizeTo = (Math.max(img.naturalWidth, img.naturalHeight) > sampleN) ? {width: sampleN, height: sampleN} : null;
+  loadImageToWork(img, resizeTo, false);
+  displayMatricesAndPreview();
+});
+
+autoSampleBtnEl.addEventListener('click', ()=>{
+  if(!img.src){ alert('Please upload image first.'); return; }
+  sampleN = Math.max(2, Math.min(30, parseInt(sampleSizeInput.value||10)));
+  loadImageToWork(img, {width: sampleN, height: sampleN}, true);
+  displayMatricesAndPreview();
+});
+
+function displayMatricesAndPreview(){
+  if(!pixelData) return;
+  const {rgb, gray, sampleSize} = getMatricesFromImageData(pixelData, sampleN);
+  // Save sampleN to global
+  sampleN = sampleSize;
+  rgbMatrixDiv.innerHTML = makeTable(rgb, true);
+  grayMatrixDiv.innerHTML = makeTable(gray, false);
+  drawMosaic(rgb, previewOriginal, Math.max(Math.floor(200/sampleN),10));
+  // clear rotated view & log
+  rotMatrixDiv.innerHTML = '';
+  previewRotated.getContext('2d').clearRect(0,0,previewRotated.width, previewRotated.height);
+  logEl.textContent = 'Ready. Click "Apply Rotation" to compute rotated matrix step-by-step.\n';
+}
+
+// rotation: manual per-pixel using inverse mapping + nearest neighbor
+applyRotBtn.addEventListener('click', ()=>{
+  if(!pixelData){ alert('Load an image first.'); return; }
+  const deg = parseFloat(angleInput.value)||0;
+  const theta = deg * Math.PI / 180;
+  const cos = Math.cos(theta), sin = Math.sin(theta);
+  const w = pixelData.width, h = pixelData.height;
+  const src = pixelData.data;
+  // We'll produce a destination ImageData same size as source
+  const ctxWork = work.getContext('2d');
+  const destImg = ctxWork.createImageData(w,h);
+  const dest = destImg.data;
+
+  // center coordinates
+  const cx = (w-1)/2;
+  const cy = (h-1)/2;
+
+  // For logging step-by-step for first K source pixels, we'll show mapping info.
+  const K = Math.max(1, Math.min(200, parseInt(logCountInput.value||12)));
+  let logLines = [];
+  let logged = 0;
+
+  // Inverse mapping: for each dest pixel (xd,yd), compute source (xs,ys)
+  // xs = cos*(xd - cx) + sin*(yd - cy) + cx
+  // ys = -sin*(xd - cx) + cos*(yd - cy) + cy
+  // This is because p = R^{-1}(p' - c) + c ; R^{-1} = R^T
+
+  for (let yd=0; yd<h; yd++){
+    for (let xd=0; xd<w; xd++){
+      // compute source (floating)
+      const dx = xd - cx;
+      const dy = yd - cy;
+      const xs =  cos * dx + sin * dy + cx;
+      const ys = -sin * dx + cos * dy + cy;
+      // nearest neighbor sampling
+      const xsN = Math.round(xs);
+      const ysN = Math.round(ys);
+      let r=0,g=0,b=0,a=0;
+      if (xsN >= 0 && xsN < w && ysN >= 0 && ysN < h) {
+        const si = (ysN * w + xsN) * 4;
+        r = src[si]; g = src[si+1]; b = src[si+2]; a = src[si+3];
+      } else {
+        // background color black or transparent; set alpha=255 for visible black
+        r=g=b=0; a=255;
+      }
+      const di = (yd * w + xd) * 4;
+      dest[di] = r; dest[di+1] = g; dest[di+2] = b; dest[di+3] = a;
+
+      // Log the mapping for the first K destination pixels (or until we've logged K)
+      if (logged < K) {
+        // Build a detailed line: dest -> (xs,ys) -> nearest -> source rgb
+        const line = `dest (${xd},${yd})  <-  invMap -> srcFloat (${xs.toFixed(3)}, ${ys.toFixed(3)}) -> nearest srcRounded (${xsN},${ysN}) => rgb [${r},${g},${b}]`;
+        logLines.push(line);
+        logged++;
+      }
+    }
+  }
+
+  // put into hidden canvas? We'll show rotated preview in a visible canvas sized for mosaic of sampleN
+  ctxWork.putImageData(destImg, 0, 0);
+  // Extract rotated N×N sample matrix for display
+  const {rgb: rotRGB, gray: rotGray} = getMatricesFromImageData(destImg, sampleN);
+
+  // show rotated matrix + mosaic
+  rotMatrixDiv.innerHTML = makeTable(rotRGB, true);
+  drawMosaic(rotRGB, previewRotated, Math.max(Math.floor(200/sampleN),10));
+
+  // show step-by-step log (first K lines)
+  logEl.textContent = `Rotation angle: ${deg}°  (θ=${theta.toFixed(4)} rad)\nMatrix size: ${w}×${h}\nCenter: (${cx.toFixed(2)}, ${cy.toFixed(2)})\n\n` + logLines.join('\n');
+
+});
+
+// clear log
+clearLogBtn.addEventListener('click', ()=> logEl.textContent='');
+
+// Utility: If user clicks mosaic, show mapping for that pixel (optional)
+previewOriginal.addEventListener('click', (e)=>{
+  if(!pixelData) return;
+  const rect = previewOriginal.getBoundingClientRect();
+  const n = sampleN;
+  const zoom = Math.max(Math.floor(200/sampleN),10);
+  const x = Math.floor((e.clientX - rect.left) / zoom);
+  const y = Math.floor((e.clientY - rect.top) / zoom);
+  if (x<0||y<0||x>=n||y>=n) return;
+  const idx = (y * pixelData.width + x) * 4;
+  const r = pixelData.data[idx], g = pixelData.data[idx+1], b = pixelData.data[idx+2];
+  alert(`Pixel clicked: (${x},${y})\nRGB: [${r},${g},${b}]\n(Shown sample is top-left ${n}×${n} of the working image)`);
+});
+
+</script>
+</body>
+</html>
